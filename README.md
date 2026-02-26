@@ -21,6 +21,19 @@ No API server, worker, Redis, Postgres, or Mongo required.
 npm install -g aispritegenerator-cli
 ```
 
+## Create Vertex Credentials (Service Account Key)
+
+1. Create or select a Google Cloud project in the Google Cloud Console.
+2. Enable the Vertex API for that project:
+`https://console.cloud.google.com/apis/library/aiplatform.googleapis.com`
+3. Go to `IAM & Admin -> Service Accounts`, create a service account for this CLI.
+4. Grant roles to that service account:
+- `Vertex AI User` (`roles/aiplatform.user`)
+- `Service Usage Consumer` (`roles/serviceusage.serviceUsageConsumer`)
+5. Open the service account, go to `Keys`, and create a new JSON key.
+6. Save the JSON file somewhere safe on your machine (never commit it to git).
+7. Point the CLI at it with `--credentials`, `GOOGLE_APPLICATION_CREDENTIALS`, or `auth login`.
+
 ## 60-Second Quickstart
 
 1. Save your Vertex defaults once:
@@ -46,6 +59,26 @@ spritegen-agent generate \
 ```
 
 If this works, you are ready to batch generate.
+
+## Example Gallery
+
+These were generated with this CLI and committed as examples:
+
+| Characters | Characters |
+|---|---|
+| ![Knight](examples/gallery/character-knight.png) | ![Ranger](examples/gallery/character-ranger.png) |
+| ![Mech Pilot](examples/gallery/character-mech.png) |  |
+
+| Terrain Tiles | Terrain Tiles |
+|---|---|
+| ![Grass Tile](examples/gallery/tile-grass.png) | ![Cobblestone Tile](examples/gallery/tile-cobblestone.png) |
+
+Use these prompts as a starting point:
+- `Full-body 2D game sprite of a heroic fantasy knight in steel armor with blue tabard, idle pose, centered, clean silhouette, high detail, no text.`
+- `Full-body 2D game sprite portrait of a fantasy ranger wearing green hood and leather armor, centered subject, clean silhouette, game art, no text.`
+- `2D game sprite portrait of a dieselpunk mech pilot with glowing visor and metal shoulder pads, centered subject, clean silhouette, game art, no text.`
+- `Seamless top-down painted grass terrain tile texture for strategy game map, no objects, no text, no border seams.`
+- `Seamless top-down cobblestone terrain tile texture for fantasy town map, no objects, no text, no border seams.`
 
 ## Common Workflows
 
