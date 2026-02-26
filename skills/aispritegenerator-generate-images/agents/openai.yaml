@@ -1,0 +1,4 @@
+interface:
+  display_name: "AISpriteGenerator Images"
+  short_description: "Generate images with aispritegenerator-cli and return output paths"
+  default_prompt: "Generate one or more images with aispritegenerator-cli and provide the resulting file paths."

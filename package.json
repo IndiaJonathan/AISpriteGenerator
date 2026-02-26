@@ -23,10 +23,12 @@
   ],
   "files": [
     "dist",
+    "skills",
     "README.md",
     "LICENSE"
   ],
   "bin": {
+    "aispritegenerator-cli": "dist/main.js",
     "spritegen-agent": "dist/main.js"
   },
   "publishConfig": {

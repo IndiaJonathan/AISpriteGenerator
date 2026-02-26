@@ -21,6 +21,30 @@ No API server, worker, Redis, Postgres, or Mongo required.
 npm install -g aispritegenerator-cli
 ```
 
+Both command names are available after install:
+- `aispritegenerator-cli` (primary)
+- `spritegen-agent` (alias)
+
+## Install Codex Skill
+
+Install the bundled image-generation skill into your current repo:
+
+```bash
+aispritegenerator-cli install --skills
+```
+
+Install globally into `$CODEX_HOME/skills` (or `~/.codex/skills`):
+
+```bash
+aispritegenerator-cli install --skills --global
+```
+
+Custom destination and overwrite:
+
+```bash
+aispritegenerator-cli install --skills --target /path/to/skills --force
+```
+
 ## Create Vertex Credentials (Service Account Key)
 
 1. Create or select a Google Cloud project in the Google Cloud Console.
@@ -175,10 +199,11 @@ Resolution order:
 ## Command Reference
 
 ```bash
-spritegen-agent --help
-spritegen-agent --version
-spritegen-agent auth status
-spritegen-agent auth logout
+aispritegenerator-cli --help
+aispritegenerator-cli --version
+aispritegenerator-cli install --skills
+aispritegenerator-cli auth status
+aispritegenerator-cli auth logout
 ```
 
 ## Development
