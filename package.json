@@ -1,0 +1,55 @@
+{
+  "name": "aispritegenerator-cli",
+  "version": "0.1.0",
+  "description": "Standalone CLI for generating AI sprites with Google Vertex AI.",
+  "license": "MIT",
+  "author": "IndiaJonathan",
+  "private": false,
+  "homepage": "https://github.com/IndiaJonathan/AISpriteGenerator#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IndiaJonathan/AISpriteGenerator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IndiaJonathan/AISpriteGenerator/issues"
+  },
+  "keywords": [
+    "ai",
+    "sprite",
+    "image-generation",
+    "vertex-ai",
+    "gemini",
+    "cli"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "spritegen-agent": "dist/main.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --config vitest.config.ts",
+    "start": "tsx src/main.ts",
+    "prepublishOnly": "npm run lint && npm test && npm run build"
+  },
+  "dependencies": {
+    "@google/genai": "^1.42.0",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
