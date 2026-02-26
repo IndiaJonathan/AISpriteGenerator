@@ -1,8 +1,19 @@
 # AISpriteGenerator CLI
 
-Standalone CLI for direct image generation with Google Vertex AI + Gemini image models.
+Generate game-ready sprite images from prompts, directly from the command line.
 
-No API server, worker, Redis, Postgres, or Mongo services are required.
+No API server, worker, Redis, Postgres, or Mongo required.
+
+## Who This Is For
+
+- Game devs who want fast art iteration.
+- Teams scripting image generation in CI or local tooling.
+- AI agents that need a simple CLI contract.
+
+## Who This Is Not For
+
+- Teams looking for a hosted API service.
+- Workflows that need a full backend + queue system.
 
 ## Install
 
@@ -10,9 +21,9 @@ No API server, worker, Redis, Postgres, or Mongo services are required.
 npm install -g aispritegenerator-cli
 ```
 
-## Quick Start
+## 60-Second Quickstart
 
-Save profile defaults once:
+1. Save your Vertex defaults once:
 
 ```bash
 spritegen-agent auth login \
@@ -22,25 +33,63 @@ spritegen-agent auth login \
   --model-id gemini-3-pro-image-preview
 ```
 
-Generate a batch:
+2. Generate one image:
+
+```bash
+spritegen-agent generate \
+  --prompt "top-down pixel art copper ore icon" \
+  --count 1 \
+  --width 256 \
+  --height 256 \
+  --output-dir ./out \
+  --prefix copper-ore
+```
+
+If this works, you are ready to batch generate.
+
+## Common Workflows
+
+Generate one icon:
 
 ```bash
 spritegen-agent generate \
   --prompt "isometric iron ore game icon" \
-  --count 3 \
+  --count 1 \
   --width 128 \
   --height 128 \
-  --formats png,webp \
   --output-dir ./out \
   --prefix iron-ore
 ```
 
-Use `--transparent` to enable two-pass transparent-background extraction. Without this flag, generation uses a single-pass render (opaque output).
+Generate 20 variations:
 
-## Output Contract
+```bash
+spritegen-agent generate \
+  --prompt "fantasy potion bottle icon, game UI style" \
+  --count 20 \
+  --seed-start 1000 \
+  --output-dir ./out \
+  --prefix potion
+```
 
-- Final run report is JSON on `stdout`.
-- Progress events are JSON lines on `stderr` with `stream: "progress"`.
+Generate transparent sprites:
+
+```bash
+spritegen-agent generate \
+  --prompt "2d game tree stump, centered subject" \
+  --count 8 \
+  --transparent \
+  --formats png,webp \
+  --output-dir ./out \
+  --prefix tree-stump
+```
+
+`--transparent` enables two-pass transparent-background extraction. Without it, generation is single-pass and opaque by default.
+
+## What You See While It Runs
+
+- Live progress is emitted as JSON lines on `stderr` (`stream: "progress"`).
+- Final run result is emitted as JSON on `stdout`.
 - Exit code is non-zero if any item failed.
 
 Progress event types:
@@ -52,11 +101,18 @@ Progress event types:
 - `item-failed`
 - `run-complete`
 
-Example stream split:
+Split streams if you are automating:
 
 ```bash
 spritegen-agent generate ... 1>run-report.json 2>run-progress.log
 ```
+
+## Agent/Automation Notes
+
+- Treat `stdout` JSON as source of truth.
+- Check `summary.failed`; if `> 0`, treat the run as failed.
+- Use `items[].outputs[].path` to collect generated files.
+- Use `items[].error` for per-item diagnostics.
 
 ## Configuration
 
@@ -67,12 +123,22 @@ Environment variables:
 - `VERTEX_LOCATION` (default: `global`)
 - `VERTEX_MODEL_ID` (default: `gemini-3-pro-image-preview`)
 
-Defaults:
-- Location: `global`
-- Model: `gemini-3-pro-image-preview`
-- Credentials path: no hardcoded machine default; provide via `--credentials`, `GOOGLE_APPLICATION_CREDENTIALS`, or `auth login`.
+Resolution order:
+- CLI flags
+- Environment variables
+- Saved profile (`auth login`)
+- Built-in defaults (`global`, `gemini-3-pro-image-preview`)
 
-## Commands
+## Common Failures
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Missing project id error | `VERTEX_PROJECT_ID` not set and no saved profile | Pass `--project-id` or run `auth login` |
+| Credentials path missing/unreadable | Invalid `GOOGLE_APPLICATION_CREDENTIALS` or missing `--credentials` | Point to a valid service account JSON file |
+| Permission denied from Vertex | Service account lacks required IAM permissions | Update IAM roles on the project |
+| Long retries / overload | Vertex transient capacity issues | Increase timeout/retry options and let backoff continue |
+
+## Command Reference
 
 ```bash
 spritegen-agent --help
@@ -90,7 +156,7 @@ npm test
 npm run build
 ```
 
-## Publish
+## Publishing
 
 ```bash
 npm login
