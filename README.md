@@ -67,7 +67,7 @@ These were generated with this CLI and committed as examples:
 | Characters | Characters |
 |---|---|
 | ![Knight](examples/gallery/character-knight.png) | ![Ranger](examples/gallery/character-ranger.png) |
-| ![Mech Pilot](examples/gallery/character-mech.png) |  |
+| ![Mech Pilot](examples/gallery/character-mech.png) | ![Mage](examples/gallery/character-mage.png) |
 
 | Terrain Tiles | Terrain Tiles |
 |---|---|
@@ -77,6 +77,7 @@ Use these prompts as a starting point:
 - `Full-body 2D game sprite of a heroic fantasy knight in steel armor with blue tabard, idle pose, centered, clean silhouette, high detail, no text.`
 - `Full-body 2D game sprite portrait of a fantasy ranger wearing green hood and leather armor, centered subject, clean silhouette, game art, no text.`
 - `2D game sprite portrait of a dieselpunk mech pilot with glowing visor and metal shoulder pads, centered subject, clean silhouette, game art, no text.`
+- `Full-body 2D game sprite portrait of an arcane mage with long robe and glowing staff, idle pose, centered, clean silhouette, game art, no text.`
 - `Seamless top-down painted grass terrain tile texture for strategy game map, no objects, no text, no border seams.`
 - `Seamless top-down cobblestone terrain tile texture for fantasy town map, no objects, no text, no border seams.`
 
