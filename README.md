@@ -2,6 +2,9 @@
 
 Generate game-ready sprite images from prompts, directly from the command line.
 
+Primary model target: Google Vertex AI Gemini image preview model
+`gemini-3-pro-image-preview` (often referred to as "Nano Banana").
+
 ## Who This Is For
 
 - Game devs who want fast art iteration.
@@ -178,7 +181,7 @@ Resolution order:
 - CLI flags
 - Environment variables
 - Saved profile (`auth login`)
-- Built-in defaults (`global`, `gemini-3-pro-image-preview`)
+- Built-in defaults (`global`, `gemini-3-pro-image-preview` / "Nano Banana")
 
 ## Common Failures
 

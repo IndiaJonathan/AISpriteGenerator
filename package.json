@@ -1,7 +1,7 @@
 {
   "name": "aispritegenerator-cli",
-  "version": "0.1.0",
-  "description": "Standalone CLI for generating AI sprites with Google Vertex AI.",
+  "version": "1.0.0",
+  "description": "Standalone CLI for generating AI sprites with Google Vertex AI Gemini image preview model (Nano Banana).",
   "license": "MIT",
   "author": "IndiaJonathan",
   "private": false,
