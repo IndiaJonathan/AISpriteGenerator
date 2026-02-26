@@ -2,18 +2,11 @@
 
 Generate game-ready sprite images from prompts, directly from the command line.
 
-No API server, worker, Redis, Postgres, or Mongo required.
-
 ## Who This Is For
 
 - Game devs who want fast art iteration.
 - Teams scripting image generation in CI or local tooling.
 - AI agents that need a simple CLI contract.
-
-## Who This Is Not For
-
-- Teams looking for a hosted API service.
-- Workflows that need a full backend + queue system.
 
 ## Install
 
