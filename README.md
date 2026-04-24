@@ -140,6 +140,28 @@ spritegen-agent generate \
 
 `--transparent` enables two-pass transparent-background extraction. Without it, generation is single-pass and opaque by default.
 
+Edit an existing image while preserving the source as a visual reference:
+
+```bash
+spritegen-agent edit \
+  --input-image ./nixie-original.png \
+  --prompt "Edit only the clothing into a blue-white fantasy bikini beach skin. Preserve the original pose, face, hair, proportions, magic effects, art style, and full-body framing." \
+  --count 3 \
+  --width 1088 \
+  --height 1024 \
+  --transparent \
+  --formats png \
+  --output-dir ./out \
+  --prefix nixie-beach
+```
+
+`edit` sends the source image to Vertex along with the prompt. Use surgical prompts for source-preserving work:
+
+- Say exactly what may change.
+- Say exactly what must remain unchanged.
+- Keep `--width` and `--height` equal to the target game asset size.
+- Add `--transparent` for PNG/WebP assets that need alpha. In edit mode, the CLI preserves the source image alpha matte after the model edit, which is best for sprite/character skins that should keep the original canvas and silhouette.
+
 ## What You See While It Runs
 
 - Live progress is emitted as JSON lines on `stderr` (`stream: "progress"`).
@@ -197,6 +219,7 @@ Resolution order:
 ```bash
 aispritegenerator-cli --help
 aispritegenerator-cli --version
+aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--transparent]
 aispritegenerator-cli install --skills
 aispritegenerator-cli auth status
 aispritegenerator-cli auth logout

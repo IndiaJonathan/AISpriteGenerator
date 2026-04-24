@@ -1,5 +1,15 @@
 export type OutputFormat = 'png' | 'webp';
 
+export type InputImage = {
+  path: string;
+  mimeType: string;
+  content: Buffer;
+  bytes: number;
+  sha256: string;
+};
+
+export type InputImageReport = Omit<InputImage, 'content'>;
+
 export type GenerateOptions = {
   prompt: string;
   count: number;
@@ -13,6 +23,7 @@ export type GenerateOptions = {
   timeoutMs: number;
   retryMaxAttempts: number;
   retryInitialDelayMs: number;
+  inputImage?: InputImage;
 };
 
 export type GenerationOutput = {
@@ -57,6 +68,7 @@ export type GenerateRunReport = {
     timeoutMs: number;
     retryMaxAttempts: number;
     retryInitialDelayMs: number;
+    inputImage?: InputImageReport;
   };
   items: GenerationItemResult[];
   summary: {

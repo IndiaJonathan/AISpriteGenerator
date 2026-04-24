@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runAuthCommand } from './commands/auth';
+import { runEditCommand } from './commands/edit';
 import { runGenerateCommand } from './commands/generate';
 import { runInstallCommand } from './commands/install';
 import { createCliServices } from './config/services';
@@ -28,6 +29,11 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
 
   if (command === 'generate') {
     const result = await runGenerateCommand(rest, services);
+    return result.failedCount > 0 ? 1 : 0;
+  }
+
+  if (command === 'edit') {
+    const result = await runEditCommand(rest, services);
     return result.failedCount > 0 ? 1 : 0;
   }
 
@@ -92,6 +98,9 @@ function printUsage(): void {
   console.log('Usage:');
   console.log(
     '  aispritegenerator-cli generate --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
+  );
+  console.log(
+    '  aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
   );
   console.log('');
   console.log('  aispritegenerator-cli auth login --project-id <id> --credentials <path> [--location <loc>] [--model-id <id>] [--profile <name>]');

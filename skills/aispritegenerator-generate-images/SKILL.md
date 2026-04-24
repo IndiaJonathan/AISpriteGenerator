@@ -1,13 +1,13 @@
 ---
 name: aispritegenerator-generate-images
-description: Generate one or many images with `aispritegenerator-cli` (or `spritegen-agent`), monitor live progress, and return output file paths from the final JSON report.
+description: Generate or edit one or many images with `aispritegenerator-cli` (or `spritegen-agent`), monitor live progress, and return output file paths from the final JSON report.
 ---
 
 # AISpriteGenerator Generate Images
 
 ## Purpose
 
-Generate images locally via Vertex without running any API/worker/Redis/DB services.
+Generate or edit images locally via Vertex without running any API/worker/Redis/DB services.
 
 ## Core Workflow
 
@@ -45,7 +45,34 @@ aispritegenerator-cli generate \
 
 Add `--transparent` for transparent-background extraction.
 
-### 4. Track progress + final result
+### 4. Run source-image edits
+
+```bash
+aispritegenerator-cli edit \
+  --input-image <path/to/source.png> \
+  --prompt "<edit prompt>" \
+  --count <n> \
+  --width <w> \
+  --height <h> \
+  --transparent \
+  --formats png,webp \
+  --output-dir <dir> \
+  --prefix <name>
+```
+
+Use edit prompts that explicitly separate changed and preserved regions. For example:
+
+```text
+Change only the outfit into a blue-white beach skin. Preserve the original
+pose, face, hair, proportions, magic effects, art style, full-body framing,
+and transparent background.
+```
+
+In edit mode, `--transparent` preserves the source image alpha matte after the
+model edit. This is the preferred path for sprite/character skins that must keep
+the original transparent canvas and silhouette.
+
+### 5. Track progress + final result
 
 - Progress events stream as JSON lines to `stderr` with `stream: "progress"`.
 - Final report is JSON on `stdout`.

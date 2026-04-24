@@ -1,26 +1,26 @@
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import sharp from 'sharp';
 import { resolveVertexContext, type CliServices } from '../config/runtime-context';
 import { generateVertexBatch } from '../generation/vertex-generator';
-import type { GenerateOptions, GenerateRunReport, InputImageReport, OutputFormat, ProgressReporter } from '../generation/types';
+import type { GenerateOptions, GenerateRunReport, InputImage, ProgressReporter } from '../generation/types';
 import { CliUsageError } from '../utils/errors';
+import { sha256Hex } from '../utils/hash';
 import {
   optionalStringOption,
   parseCommandArgs,
-  parseCsv,
-  parseNonNegativeInteger,
-  parsePositiveInteger,
   requireStringOption
 } from '../utils/parse';
+import {
+  createInputImageReport,
+  parseGenerateOptions,
+  type CommandExecutionResult
+} from './generate';
 
-const ALLOWED_OUTPUT_FORMATS = new Set<OutputFormat>(['png', 'webp']);
-
-export type CommandExecutionResult = {
-  failedCount: number;
-};
-
-export async function runGenerateCommand(argv: string[], services: CliServices): Promise<CommandExecutionResult> {
+export async function runEditCommand(argv: string[], services: CliServices): Promise<CommandExecutionResult> {
   const { values, positionals } = parseCommandArgs(argv, {
+    'input-image': { type: 'string' },
     prompt: { type: 'string' },
     count: { type: 'string' },
     width: { type: 'string' },
@@ -44,7 +44,13 @@ export async function runGenerateCommand(argv: string[], services: CliServices):
     throw new CliUsageError(`Unexpected positional arguments: ${positionals.join(', ')}`);
   }
 
-  const options = parseGenerateOptions(values);
+  const { inputImagePath, generateOptions } = parseEditOptions(values);
+  const inputImage = await loadInputImage(inputImagePath);
+  const options: GenerateOptions = {
+    ...generateOptions,
+    inputImage
+  };
+
   const runId = `run_${randomUUID()}`;
   const startedAt = Date.now();
   const startedIso = new Date(startedAt).toISOString();
@@ -102,70 +108,62 @@ export async function runGenerateCommand(argv: string[], services: CliServices):
   };
 }
 
-export function parseGenerateOptions(values: Record<string, string | boolean | undefined>): GenerateOptions {
-  const prompt = requireStringOption(values, 'prompt', '--prompt');
-  const count = parsePositiveInteger(requireStringOption(values, 'count', '--count'), '--count');
-
-  const widthRaw = optionalStringOption(values, 'width');
-  const heightRaw = optionalStringOption(values, 'height');
-  const transparent = values['transparent'] === true;
-  const formatsRaw = optionalStringOption(values, 'formats');
-  const outputDir = optionalStringOption(values, 'output-dir') ?? './spritegen-out';
-  const prefix = optionalStringOption(values, 'prefix') ?? 'image';
-  const seedStartRaw = optionalStringOption(values, 'seed-start');
-  const timeoutRaw = optionalStringOption(values, 'timeout-ms');
-  const retryAttemptsRaw = optionalStringOption(values, 'retry-max-attempts');
-  const retryDelayRaw = optionalStringOption(values, 'retry-initial-delay-ms');
-
-  const width = widthRaw ? parsePositiveInteger(widthRaw, '--width') : 1024;
-  const height = heightRaw ? parsePositiveInteger(heightRaw, '--height') : 1024;
-  const seedStart = seedStartRaw ? parseNonNegativeInteger(seedStartRaw, '--seed-start') : 0;
-  const timeoutMs = timeoutRaw ? parsePositiveInteger(timeoutRaw, '--timeout-ms') : 43_200_000;
-  const retryMaxAttempts = retryAttemptsRaw ? parsePositiveInteger(retryAttemptsRaw, '--retry-max-attempts') : 10;
-  const retryInitialDelayMs = retryDelayRaw ? parsePositiveInteger(retryDelayRaw, '--retry-initial-delay-ms') : 30_000;
-
-  const parsedFormats = parseCsv(formatsRaw ?? 'png') ?? ['png'];
-  const formats: OutputFormat[] = [];
-
-  for (const format of parsedFormats) {
-    if (!ALLOWED_OUTPUT_FORMATS.has(format as OutputFormat)) {
-      throw new CliUsageError('--formats only supports: png, webp.');
-    }
-
-    formats.push(format as OutputFormat);
-  }
-
-  const uniqueFormats = Array.from(new Set(formats));
-
+export function parseEditOptions(values: Record<string, string | boolean | undefined>): {
+  inputImagePath: string;
+  generateOptions: GenerateOptions;
+} {
   return {
-    prompt,
-    count,
-    width,
-    height,
-    transparent,
-    formats: uniqueFormats,
-    outputDir,
-    prefix,
-    seedStart,
-    timeoutMs,
-    retryMaxAttempts,
-    retryInitialDelayMs
+    inputImagePath: requireStringOption(values, 'input-image', '--input-image'),
+    generateOptions: parseGenerateOptions(values)
   };
 }
 
-export function createInputImageReport(
-  inputImage: GenerateOptions['inputImage']
-): InputImageReport | undefined {
-  if (!inputImage) {
-    return undefined;
+export async function loadInputImage(inputImagePath: string): Promise<InputImage> {
+  const absolutePath = path.resolve(inputImagePath);
+  let content: Buffer;
+
+  try {
+    content = await readFile(absolutePath);
+  } catch {
+    throw new CliUsageError(`--input-image does not exist or is not readable: "${absolutePath}".`);
+  }
+
+  let format: string | undefined;
+  try {
+    const metadata = await sharp(content, { failOnError: true }).metadata();
+    format = metadata.format;
+  } catch {
+    throw new CliUsageError(`--input-image must be a readable PNG, JPEG, or WebP image: "${absolutePath}".`);
+  }
+
+  const mimeType = imageFormatToMimeType(format);
+  if (!mimeType) {
+    throw new CliUsageError(`--input-image only supports PNG, JPEG, and WebP images: "${absolutePath}".`);
   }
 
   return {
-    path: inputImage.path,
-    mimeType: inputImage.mimeType,
-    bytes: inputImage.bytes,
-    sha256: inputImage.sha256
+    path: absolutePath,
+    mimeType,
+    content,
+    bytes: content.byteLength,
+    sha256: sha256Hex(content)
   };
+}
+
+function imageFormatToMimeType(format: string | undefined): string | undefined {
+  if (format === 'png') {
+    return 'image/png';
+  }
+
+  if (format === 'jpeg' || format === 'jpg') {
+    return 'image/jpeg';
+  }
+
+  if (format === 'webp') {
+    return 'image/webp';
+  }
+
+  return undefined;
 }
 
 function createStderrProgressReporter(): ProgressReporter {

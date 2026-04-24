@@ -2,9 +2,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { GoogleGenAI, Modality, type Content, type GenerateContentResponse } from '@google/genai';
-import type { GenerateOptions, GenerationItemResult, GenerationOutput, OutputFormat, ProgressReporter } from './types';
+import type {
+  GenerateOptions,
+  GenerationItemResult,
+  GenerationOutput,
+  InputImage,
+  OutputFormat,
+  ProgressReporter
+} from './types';
 import type { ResolvedVertexContext } from '../config/runtime-context';
 import { sha256Hex } from '../utils/hash';
+import { applySourceAlphaMask } from './alpha-mask';
 import { classifyVertexError } from './vertex-errors';
 
 type ExtractedInlineImage = {
@@ -32,6 +40,12 @@ const VERTEX_BLACK_BACKGROUND_EDIT_INSTRUCTION = [
   'Change ONLY the background to a perfectly solid pure black (#000000).',
   'Do not change the subject, lighting, camera angle, framing, or composition.',
   'Do not rescale or reposition anything.'
+].join(' ');
+
+const VERTEX_TRANSPARENT_SOURCE_EDIT_INSTRUCTION = [
+  'Preserve the source image transparent-background asset format.',
+  'Do not add a scene, floor, cast shadow, checkerboard, white fill, or any new background behind the subject.',
+  'Keep the edited subject inside the original source silhouette unless the user explicitly asks for silhouette changes.'
 ].join(' ');
 
 export async function generateVertexBatch(
@@ -157,10 +171,19 @@ async function generateVertexItemWithRetry(input: {
         modelsClient: input.modelsClient,
         modelId: input.context.modelId,
         prompt: input.prompt,
+        inputImage: input.options.inputImage,
         transparent: input.options.transparent,
         runDeadline: input.runDeadline
       });
-      const normalized = await normalizeCanvas(generated, input.options.width, input.options.height, input.options.transparent);
+      let normalized = await normalizeCanvas(generated, input.options.width, input.options.height, input.options.transparent);
+      if (input.options.transparent && input.options.inputImage) {
+        normalized = await applySourceAlphaMask(
+          normalized,
+          input.options.inputImage.content,
+          input.options.width,
+          input.options.height
+        );
+      }
 
       const outputs = await writeOutputs(input.runDirectory, {
         prefix: input.options.prefix,
@@ -333,6 +356,7 @@ async function generateItemImageBuffer(input: {
   };
   modelId: string;
   prompt: string;
+  inputImage?: InputImage;
   transparent: boolean;
   runDeadline: number;
 }): Promise<Buffer> {
@@ -342,11 +366,29 @@ async function generateItemImageBuffer(input: {
   }
 
   if (!input.transparent) {
+    const request = input.inputImage
+      ? buildEditRequest(input.modelId, input.prompt, input.inputImage)
+      : buildStandardRequest(input.modelId, input.prompt);
     const directResponse = await withTimeout(
-      input.modelsClient.generateContent(buildStandardRequest(input.modelId, input.prompt)),
+      input.modelsClient.generateContent(request),
       firstRequestDeadline
     );
-    const directImage = requireInlineImage(directResponse, 'standard generation');
+    const directImage = requireInlineImage(directResponse, input.inputImage ? 'image edit' : 'standard generation');
+    return directImage.content;
+  }
+
+  if (input.inputImage) {
+    const directResponse = await withTimeout(
+      input.modelsClient.generateContent(
+        buildEditRequest(
+          input.modelId,
+          `${input.prompt}\n\n${VERTEX_TRANSPARENT_SOURCE_EDIT_INSTRUCTION}`,
+          input.inputImage
+        )
+      ),
+      firstRequestDeadline
+    );
+    const directImage = requireInlineImage(directResponse, 'transparent source-image edit');
     return directImage.content;
   }
 
@@ -410,6 +452,31 @@ function buildStandardRequest(modelId: string, prompt: string): VertexGenerateCo
       {
         role: 'user',
         parts: [{ text: prompt }]
+      }
+    ],
+    config: {
+      responseModalities: [Modality.IMAGE]
+    }
+  };
+}
+
+function buildEditRequest(modelId: string, prompt: string, inputImage: InputImage): VertexGenerateContentRequest {
+  return {
+    model: modelId,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: inputImage.mimeType,
+              data: inputImage.content.toString('base64')
+            }
+          },
+          {
+            text: prompt
+          }
+        ]
       }
     ],
     config: {
