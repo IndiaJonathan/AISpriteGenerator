@@ -64,13 +64,15 @@ Use edit prompts that explicitly separate changed and preserved regions. For exa
 
 ```text
 Change only the outfit into a blue-white beach skin. Preserve the original
-pose, face, hair, proportions, magic effects, art style, full-body framing,
-and transparent background.
+pose, face, hair, proportions, magic effects, art style, and full-body framing.
 ```
 
-In edit mode, `--transparent` preserves the source image alpha matte after the
-model edit. This is the preferred path for sprite/character skins that must keep
-the original transparent canvas and silhouette.
+In edit mode, `--transparent` defaults to `--alpha-mode extract`: source image
+plus prompt creates a white-background edit, that edit is converted to a
+black-background variant, then the pair is diffed into transparency. Use
+`--alpha-mode source` only when the output must be forced back into the original
+source alpha matte. Use `--alpha-mode edited` only when the model reliably
+returns native alpha and you want to trust it directly.
 
 ### 5. Track progress + final result
 

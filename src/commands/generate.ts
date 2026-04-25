@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { resolveVertexContext, type CliServices } from '../config/runtime-context';
 import { generateVertexBatch } from '../generation/vertex-generator';
-import type { GenerateOptions, GenerateRunReport, InputImageReport, OutputFormat, ProgressReporter } from '../generation/types';
+import type { AlphaMode, GenerateOptions, GenerateRunReport, InputImageReport, OutputFormat, ProgressReporter } from '../generation/types';
 import { CliUsageError } from '../utils/errors';
 import {
   optionalStringOption,
@@ -37,7 +37,8 @@ export async function runGenerateCommand(argv: string[], services: CliServices):
     'model-id': { type: 'string' },
     'timeout-ms': { type: 'string' },
     'retry-max-attempts': { type: 'string' },
-    'retry-initial-delay-ms': { type: 'string' }
+    'retry-initial-delay-ms': { type: 'string' },
+    'alpha-mode': { type: 'string' }
   });
 
   if (positionals.length > 0) {
@@ -85,7 +86,8 @@ export async function runGenerateCommand(argv: string[], services: CliServices):
       timeoutMs: options.timeoutMs,
       retryMaxAttempts: options.retryMaxAttempts,
       retryInitialDelayMs: options.retryInitialDelayMs,
-      inputImage: createInputImageReport(options.inputImage)
+      inputImage: createInputImageReport(options.inputImage),
+      alphaMode: options.alphaMode
     },
     items,
     summary: {
@@ -116,6 +118,7 @@ export function parseGenerateOptions(values: Record<string, string | boolean | u
   const timeoutRaw = optionalStringOption(values, 'timeout-ms');
   const retryAttemptsRaw = optionalStringOption(values, 'retry-max-attempts');
   const retryDelayRaw = optionalStringOption(values, 'retry-initial-delay-ms');
+  const alphaModeRaw = optionalStringOption(values, 'alpha-mode');
 
   const width = widthRaw ? parsePositiveInteger(widthRaw, '--width') : 1024;
   const height = heightRaw ? parsePositiveInteger(heightRaw, '--height') : 1024;
@@ -123,6 +126,7 @@ export function parseGenerateOptions(values: Record<string, string | boolean | u
   const timeoutMs = timeoutRaw ? parsePositiveInteger(timeoutRaw, '--timeout-ms') : 43_200_000;
   const retryMaxAttempts = retryAttemptsRaw ? parsePositiveInteger(retryAttemptsRaw, '--retry-max-attempts') : 10;
   const retryInitialDelayMs = retryDelayRaw ? parsePositiveInteger(retryDelayRaw, '--retry-initial-delay-ms') : 30_000;
+  const alphaMode = parseAlphaMode(alphaModeRaw);
 
   const parsedFormats = parseCsv(formatsRaw ?? 'png') ?? ['png'];
   const formats: OutputFormat[] = [];
@@ -149,8 +153,21 @@ export function parseGenerateOptions(values: Record<string, string | boolean | u
     seedStart,
     timeoutMs,
     retryMaxAttempts,
-    retryInitialDelayMs
+    retryInitialDelayMs,
+    alphaMode
   };
+}
+
+function parseAlphaMode(raw: string | undefined): AlphaMode {
+  if (!raw) {
+    return 'extract';
+  }
+
+  if (raw === 'edited' || raw === 'source' || raw === 'extract') {
+    return raw;
+  }
+
+  throw new CliUsageError('--alpha-mode only supports: edited, source, extract.');
 }
 
 export function createInputImageReport(

@@ -160,7 +160,9 @@ spritegen-agent edit \
 - Say exactly what may change.
 - Say exactly what must remain unchanged.
 - Keep `--width` and `--height` equal to the target game asset size.
-- Add `--transparent` for PNG/WebP assets that need alpha. In edit mode, the CLI preserves the source image alpha matte after the model edit, which is best for sprite/character skins that should keep the original canvas and silhouette.
+- Add `--transparent` for PNG/WebP assets that need alpha. In edit mode, the default alpha mode is `extract`: source image plus prompt creates a white-background edit, that edit is converted to a black-background variant, then the pair is diffed into transparency.
+- Use `--alpha-mode source` only when you want to force the output back into the source image's original alpha matte.
+- Use `--alpha-mode edited` only when the model reliably returns native alpha and you want to trust it directly.
 
 ## What You See While It Runs
 
@@ -219,7 +221,7 @@ Resolution order:
 ```bash
 aispritegenerator-cli --help
 aispritegenerator-cli --version
-aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--transparent]
+aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--transparent] [--alpha-mode edited|source|extract]
 aispritegenerator-cli install --skills
 aispritegenerator-cli auth status
 aispritegenerator-cli auth logout

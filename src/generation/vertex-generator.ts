@@ -31,6 +31,7 @@ type VertexGenerateContentRequest = {
 };
 
 const VERTEX_WHITE_BACKGROUND_INSTRUCTION = [
+  'For alpha extraction, render this intermediate image against a solid background instead of transparency.',
   'Generate the subject on a perfectly solid pure white (#FFFFFF) background ONLY.',
   'No gradients, shadows, borders, patterns, reflections, or extra shapes in the background.',
   'Keep the subject fully in frame.'
@@ -47,6 +48,9 @@ const VERTEX_TRANSPARENT_SOURCE_EDIT_INSTRUCTION = [
   'Do not add a scene, floor, cast shadow, checkerboard, white fill, or any new background behind the subject.',
   'Keep the edited subject inside the original source silhouette unless the user explicitly asks for silhouette changes.'
 ].join(' ');
+
+const EXTRACTED_ALPHA_FLOOR = 16 / 255;
+const EXTRACTED_ALPHA_CEILING = 250 / 255;
 
 export async function generateVertexBatch(
   context: ResolvedVertexContext,
@@ -173,10 +177,11 @@ async function generateVertexItemWithRetry(input: {
         prompt: input.prompt,
         inputImage: input.options.inputImage,
         transparent: input.options.transparent,
+        alphaMode: input.options.alphaMode,
         runDeadline: input.runDeadline
       });
       let normalized = await normalizeCanvas(generated, input.options.width, input.options.height, input.options.transparent);
-      if (input.options.transparent && input.options.inputImage) {
+      if (input.options.transparent && input.options.inputImage && input.options.alphaMode === 'source') {
         normalized = await applySourceAlphaMask(
           normalized,
           input.options.inputImage.content,
@@ -358,6 +363,7 @@ async function generateItemImageBuffer(input: {
   prompt: string;
   inputImage?: InputImage;
   transparent: boolean;
+  alphaMode: GenerateOptions['alphaMode'];
   runDeadline: number;
 }): Promise<Buffer> {
   const firstRequestDeadline = input.runDeadline - Date.now();
@@ -377,7 +383,7 @@ async function generateItemImageBuffer(input: {
     return directImage.content;
   }
 
-  if (input.inputImage) {
+  if (input.inputImage && (input.alphaMode === 'edited' || input.alphaMode === 'source')) {
     const directResponse = await withTimeout(
       input.modelsClient.generateContent(
         buildEditRequest(
@@ -392,11 +398,17 @@ async function generateItemImageBuffer(input: {
     return directImage.content;
   }
 
+  const whiteRequest = input.inputImage
+    ? buildEditWhiteBackgroundRequest(input.modelId, input.prompt, input.inputImage)
+    : buildWhiteBackgroundRequest(input.modelId, input.prompt);
   const whiteResponse = await withTimeout(
-    input.modelsClient.generateContent(buildWhiteBackgroundRequest(input.modelId, input.prompt)),
+    input.modelsClient.generateContent(whiteRequest),
     firstRequestDeadline
   );
-  const whiteVariant = requireInlineImage(whiteResponse, 'white-background generation');
+  const whiteVariant = requireInlineImage(
+    whiteResponse,
+    input.inputImage ? 'white-background image edit' : 'white-background generation'
+  );
 
   const secondRequestDeadline = Math.max(1, input.runDeadline - Date.now());
   const blackResponse = await withTimeout(
@@ -498,6 +510,14 @@ function buildWhiteBackgroundRequest(modelId: string, prompt: string): VertexGen
       responseModalities: [Modality.IMAGE]
     }
   };
+}
+
+function buildEditWhiteBackgroundRequest(
+  modelId: string,
+  prompt: string,
+  inputImage: InputImage
+): VertexGenerateContentRequest {
+  return buildEditRequest(modelId, `${prompt}\n\n${VERTEX_WHITE_BACKGROUND_INSTRUCTION}`, inputImage);
 }
 
 function buildBlackBackgroundEditRequest(modelId: string, whiteVariant: ExtractedInlineImage): VertexGenerateContentRequest {
@@ -653,6 +673,11 @@ async function buildTransparentFromVariants(whiteImage: Buffer, blackImage: Buff
     }
 
     alpha = Math.max(0, Math.min(1, alpha));
+    if (alpha < EXTRACTED_ALPHA_FLOOR) {
+      alpha = 0;
+    } else if (alpha > EXTRACTED_ALPHA_CEILING) {
+      alpha = 1;
+    }
 
     let outputRed = 0;
     let outputGreen = 0;

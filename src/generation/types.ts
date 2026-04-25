@@ -1,4 +1,5 @@
 export type OutputFormat = 'png' | 'webp';
+export type AlphaMode = 'edited' | 'source' | 'extract';
 
 export type InputImage = {
   path: string;
@@ -24,6 +25,7 @@ export type GenerateOptions = {
   retryMaxAttempts: number;
   retryInitialDelayMs: number;
   inputImage?: InputImage;
+  alphaMode: AlphaMode;
 };
 
 export type GenerationOutput = {
@@ -69,6 +71,7 @@ export type GenerateRunReport = {
     retryMaxAttempts: number;
     retryInitialDelayMs: number;
     inputImage?: InputImageReport;
+    alphaMode: AlphaMode;
   };
   items: GenerationItemResult[];
   summary: {

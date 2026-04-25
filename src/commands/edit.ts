@@ -37,7 +37,8 @@ export async function runEditCommand(argv: string[], services: CliServices): Pro
     'model-id': { type: 'string' },
     'timeout-ms': { type: 'string' },
     'retry-max-attempts': { type: 'string' },
-    'retry-initial-delay-ms': { type: 'string' }
+    'retry-initial-delay-ms': { type: 'string' },
+    'alpha-mode': { type: 'string' }
   });
 
   if (positionals.length > 0) {
@@ -91,7 +92,8 @@ export async function runEditCommand(argv: string[], services: CliServices): Pro
       timeoutMs: options.timeoutMs,
       retryMaxAttempts: options.retryMaxAttempts,
       retryInitialDelayMs: options.retryInitialDelayMs,
-      inputImage: createInputImageReport(options.inputImage)
+      inputImage: createInputImageReport(options.inputImage),
+      alphaMode: options.alphaMode
     },
     items,
     summary: {

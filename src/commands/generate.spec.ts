@@ -21,7 +21,8 @@ describe('parseGenerateOptions', () => {
       seedStart: 0,
       timeoutMs: 43_200_000,
       retryMaxAttempts: 10,
-      retryInitialDelayMs: 30_000
+      retryInitialDelayMs: 30_000,
+      alphaMode: 'extract'
     });
   });
 
@@ -36,7 +37,8 @@ describe('parseGenerateOptions', () => {
       'seed-start': '7',
       'timeout-ms': '600000',
       'retry-max-attempts': '12',
-      'retry-initial-delay-ms': '4000'
+      'retry-initial-delay-ms': '4000',
+      'alpha-mode': 'source'
     });
 
     expect(options.formats).toEqual(['png', 'webp']);
@@ -47,6 +49,7 @@ describe('parseGenerateOptions', () => {
     expect(options.timeoutMs).toBe(600000);
     expect(options.retryMaxAttempts).toBe(12);
     expect(options.retryInitialDelayMs).toBe(4000);
+    expect(options.alphaMode).toBe('source');
   });
 
   it('rejects unsupported output formats', () => {
@@ -55,6 +58,16 @@ describe('parseGenerateOptions', () => {
         prompt: 'a crystal shard',
         count: '1',
         formats: 'png,wav'
+      })
+    ).toThrow(CliUsageError);
+  });
+
+  it('rejects unsupported alpha modes', () => {
+    expect(() =>
+      parseGenerateOptions({
+        prompt: 'a crystal shard',
+        count: '1',
+        'alpha-mode': 'invalid'
       })
     ).toThrow(CliUsageError);
   });

@@ -27,7 +27,8 @@ describe('parseEditOptions', () => {
       seedStart: 0,
       timeoutMs: 43_200_000,
       retryMaxAttempts: 10,
-      retryInitialDelayMs: 30_000
+      retryInitialDelayMs: 30_000,
+      alphaMode: 'extract'
     });
   });
 

@@ -97,10 +97,10 @@ function printUsage(): void {
   console.log('');
   console.log('Usage:');
   console.log(
-    '  aispritegenerator-cli generate --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
+    '  aispritegenerator-cli generate --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--alpha-mode edited|source|extract] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
   );
   console.log(
-    '  aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
+    '  aispritegenerator-cli edit --input-image <path> --prompt <text> --count <n> [--width <n>] [--height <n>] [--transparent] [--alpha-mode edited|source|extract] [--formats <csv>] [--output-dir <path>] [--prefix <name>] [--seed-start <n>] [--profile <name>] [--project-id <id>] [--credentials <path>] [--location <loc>] [--model-id <id>] [--timeout-ms <n>] [--retry-max-attempts <n>] [--retry-initial-delay-ms <n>]'
   );
   console.log('');
   console.log('  aispritegenerator-cli auth login --project-id <id> --credentials <path> [--location <loc>] [--model-id <id>] [--profile <name>]');
